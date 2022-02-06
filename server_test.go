@@ -18,16 +18,15 @@ func TestGetCellPhones(t *testing.T) {
 	}
 }
 
-
 func TestGetCellPhoneById(t *testing.T) {
 	var p *CellPhone
-	
+
 	// Validate that a valid pointer is returned for a valid id
 	expected := 0
 	p = GetCellPhoneById(expected)
 	if p == nil {
 		t.Fatal("Expected: valid cell phone pointer, Observed: nil pointer")
-	} 
+	}
 
 	// Validate the result
 	observed := p.Id
@@ -35,12 +34,12 @@ func TestGetCellPhoneById(t *testing.T) {
 		t.Fatalf("Expected: %q, Observed: %q", expected, observed)
 	}
 
-	// Validate that a nil pointer is returned for invalid id 
+	// Validate that a nil pointer is returned for invalid id
 	expected = -1
 	p = GetCellPhoneById(expected)
 	if p != nil {
 		t.Fatal("Expected: nil cell phone pointer, Observed: valid cell phone pointer")
-	} 
+	}
 }
 func TestGetCellPhonesByMake(t *testing.T) {
 	makes := [...]string{"Motorola", "Apple"}
@@ -128,7 +127,7 @@ func TestGet(t *testing.T) {
 			name:            "phones",
 			path:            "/api/phones/os/android",
 			expectedCode:    http.StatusOK,
-			expectedContent: []string{"id", "make", "model", "os", "releaseDate", "image", "Motorola",},
+			expectedContent: []string{"id", "make", "model", "os", "releaseDate", "image", "Motorola"},
 		},
 	}
 
@@ -192,6 +191,7 @@ type PostTestCase struct {
 	expectedCode    int
 	expectedContent []string
 }
+
 
 func TestPost(t *testing.T) {
 	// Post request contains url, content type, body

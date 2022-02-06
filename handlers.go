@@ -5,11 +5,40 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
 	"time"
-
-	"github.com/gorilla/mux"
 )
+
+var (
+	reGetAllPhones    = regexp.MustCompile("^/api/phones/?$")
+	reGetPhoneById    = regexp.MustCompile("^/api/phones/([0-9]+)$")
+	reGetPhonesByMake = regexp.MustCompile("^/api/phones/make/([a-zA-Z]+)$")
+	reGetPhonesByOS   = regexp.MustCompile("^/api/phones/os/([a-zA-Z]+)$")
+)
+
+func RootHandler(w http.ResponseWriter, r *http.Request) {
+	// fmt.Printf("\nMethod: %q, Path: %q\n", r.Method, r.URL.Path)
+	if r.Method == http.MethodGet {
+		if r.URL.Path == "/health" {
+			HealthHandler(w, r)
+		} else if r.URL.Path == "/utc" {
+			UtcHandler(w, r)
+		} else if reGetAllPhones.MatchString(r.URL.Path) {
+			GetCellPhonesHandler(w, r)
+		} else if reGetPhoneById.MatchString(r.URL.Path) {
+			GetCellPhoneByIdHandler(w, r)
+		} else if reGetPhonesByMake.MatchString(r.URL.Path) {
+			GetCellPhonesByMakeHandler(w, r)
+		} else if reGetPhonesByOS.MatchString(r.URL.Path) {
+			GetCellPhonesByOsHandler(w, r)
+		}
+	} else if r.Method == http.MethodPost {
+		if reGetAllPhones.MatchString(r.URL.Path) {
+			PostCellPhoneHandler(w, r)
+		}
+	}
+}
 
 // curl --request GET http://localhost:4000/health
 func HealthHandler(w http.ResponseWriter, r *http.Request) {
@@ -24,8 +53,7 @@ func UtcHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%s", utcTimestamp)
 }
 
-
-/* 
+/*
 
 curl --data '{"id": 0, "make": "Motorola", "model": "g power 2021", "os": "android", "releaseDate": "01/11/2021", "image": "A Motorola phone image"}' --header "Content-Type: application/json" --request POST http://localhost:4000/api/phones
 
@@ -100,7 +128,7 @@ func GetCellPhoneById(id int) *CellPhone {
 		}
 	}
 	return p
-} 
+}
 
 func GetCellPhonesByMake(make string) []CellPhone {
 	var filtered []CellPhone
@@ -138,8 +166,8 @@ func GetCellPhonesHandler(w http.ResponseWriter, r *http.Request) {
 
 // curl --request GET http://localhost:4000/api/phones/0
 func GetCellPhoneByIdHandler(w http.ResponseWriter, r *http.Request) {
-	txt := mux.Vars(r)["id"]
-	id, err := strconv.Atoi(txt)
+	match := reGetPhoneById.FindStringSubmatch(r.URL.Path)
+	id, err := strconv.Atoi(match[1])
 	if err != nil {
 		errorResponse(w, fmt.Sprintf("id parameter cannot be converted to integer: %s", err.Error()), http.StatusBadRequest)
 	}
@@ -157,8 +185,9 @@ func GetCellPhoneByIdHandler(w http.ResponseWriter, r *http.Request) {
 
 // curl --request GET http://localhost:4000/api/phones/make/Motorola
 func GetCellPhonesByMakeHandler(w http.ResponseWriter, r *http.Request) {
-	make := mux.Vars(r)["make"]
-	
+	match := reGetPhonesByMake.FindStringSubmatch(r.URL.Path)
+	make := match[1]
+
 	phone := GetCellPhonesByMake(make)
 	jsonTxt, err := json.Marshal(phone)
 	if err != nil {
@@ -173,8 +202,9 @@ func GetCellPhonesByMakeHandler(w http.ResponseWriter, r *http.Request) {
 
 // curl --request GET http://localhost:4000/api/phones/os/android
 func GetCellPhonesByOsHandler(w http.ResponseWriter, r *http.Request) {
-	os := mux.Vars(r)["os"]
-	
+	match := reGetPhonesByOS.FindStringSubmatch(r.URL.Path)
+	os := match[1]
+
 	phone := GetCellPhonesByOS(os)
 	jsonTxt, err := json.Marshal(phone)
 	if err != nil {
@@ -186,7 +216,6 @@ func GetCellPhonesByOsHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write(jsonTxt)
 }
-
 
 func errorResponse(w http.ResponseWriter, message string, httpStatusCode int) {
 	w.Header().Set("Content-Type", "application/json")

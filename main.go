@@ -5,8 +5,6 @@ import (
 	"net/http"
 	"os"
 	"time"
-
-	"github.com/gorilla/mux"
 )
 
 type CellPhone struct {
@@ -23,15 +21,9 @@ func GetIpPortText(ip string, port int) string {
 	return text
 }
 
-func newMultiplexer() *mux.Router {
-	m := mux.NewRouter()
-	m.HandleFunc("/health", HealthHandler).Methods("GET")
-	m.HandleFunc("/utc", UtcHandler).Methods("GET")
-	m.HandleFunc("/api/phones", GetCellPhonesHandler).Methods("GET")
-	m.HandleFunc("/api/phones/{id:[0-9]+}", GetCellPhoneByIdHandler).Methods("GET")
-	m.HandleFunc("/api/phones/make/{make:[a-zA-Z]+}", GetCellPhonesByMakeHandler).Methods("GET")
-	m.HandleFunc("/api/phones/os/{os:[a-zA-Z]+}", GetCellPhonesByOsHandler).Methods("GET")
-	m.HandleFunc("/api/phones", PostCellPhoneHandler).Methods("POST")
+func newMultiplexer() *http.ServeMux {
+	m := http.NewServeMux()
+	m.HandleFunc("/", RootHandler)
 	return m
 }
 
